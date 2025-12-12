@@ -8,6 +8,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.SwerveConstants;
 
 public class DriveTrain {
@@ -19,13 +20,14 @@ public class DriveTrain {
     private final SwerveDriveOdometry odometry;
 
     public DriveTrain() {
-        frontLeft = new SwerveModule(SwerveConstants.FL_DRIVE_ID, SwerveConstants.FL_ANGLE_ID, SwerveConstants.FL_CANCODER_ID, SwerveConstants.FL_OFFSET);
-        frontRight = new SwerveModule(SwerveConstants.FR_DRIVE_ID, SwerveConstants.FR_ANGLE_ID, SwerveConstants.FR_CANCODER_ID, SwerveConstants.FR_OFFSET);
-        backLeft = new SwerveModule(SwerveConstants.BL_DRIVE_ID, SwerveConstants.BL_ANGLE_ID, SwerveConstants.BL_CANCODER_ID, SwerveConstants.BL_OFFSET);
-        backRight = new SwerveModule(SwerveConstants.BR_DRIVE_ID, SwerveConstants.BR_ANGLE_ID, SwerveConstants.BR_CANCODER_ID, SwerveConstants.BR_OFFSET);
+        // İsim parametresi eklendi
+        frontLeft = new SwerveModule("FrontLeft", SwerveConstants.FL_DRIVE_ID, SwerveConstants.FL_ANGLE_ID, SwerveConstants.FL_CANCODER_ID, SwerveConstants.FL_OFFSET);
+        frontRight = new SwerveModule("FrontRight", SwerveConstants.FR_DRIVE_ID, SwerveConstants.FR_ANGLE_ID, SwerveConstants.FR_CANCODER_ID, SwerveConstants.FR_OFFSET);
+        backLeft = new SwerveModule("BackLeft", SwerveConstants.BL_DRIVE_ID, SwerveConstants.BL_ANGLE_ID, SwerveConstants.BL_CANCODER_ID, SwerveConstants.BL_OFFSET);
+        backRight = new SwerveModule("BackRight", SwerveConstants.BR_DRIVE_ID, SwerveConstants.BR_ANGLE_ID, SwerveConstants.BR_CANCODER_ID, SwerveConstants.BR_OFFSET);
 
         gyro = new Pigeon2(SwerveConstants.PIGEON_ID);
-        gyro.reset();
+        gyro.reset(); 
 
         odometry = new SwerveDriveOdometry(
             SwerveConstants.KINEMATICS, 
@@ -43,7 +45,6 @@ public class DriveTrain {
         }
 
         SwerveModuleState[] moduleStates = SwerveConstants.KINEMATICS.toSwerveModuleStates(speeds);
-        
         SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, SwerveConstants.MAX_SPEED_METERS_PER_SECOND);
 
         frontLeft.setDesiredState(moduleStates[0]);
@@ -56,8 +57,20 @@ public class DriveTrain {
         return Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
     }
 
+    // Robot.java'da robotPeriodic içinden çağrılır
     public void periodic() {
+        // Odometriyi güncelle
         odometry.update(getRotation2d(), getModulePositions());
+
+        // --- DASHBOARD GÜNCELLEMELERİ ---
+        // Gyro açısını ekrana bas
+        SmartDashboard.putNumber("Gyro Yaw", getRotation2d().getDegrees());
+
+        // Her modülün verilerini ekrana bas
+        frontLeft.updateTelemetry();
+        frontRight.updateTelemetry();
+        backLeft.updateTelemetry();
+        backRight.updateTelemetry();
     }
     
     public void resetGyro() {
