@@ -17,20 +17,19 @@ public final class Constants {
         public static final double ANGLE_GEAR_RATIO = 150.0 / 7.0; 
         public static final double WHEEL_DIAMETER = Units.inchesToMeters(4.0);
         
-        // Dönüşüm Faktörleri (Encoder'dan metreye veya radyana)
         public static final double DRIVE_POS_FACTOR = (WHEEL_DIAMETER * Math.PI) / DRIVE_GEAR_RATIO;
-        public static final double DRIVE_VEL_FACTOR = DRIVE_POS_FACTOR / 60.0; // RPM -> m/s
-        public static final double ANGLE_POS_FACTOR = (2 * Math.PI) / ANGLE_GEAR_RATIO; // Rotasyon -> Radyan
+        public static final double DRIVE_VEL_FACTOR = DRIVE_POS_FACTOR / 60.0; // rpm -> m/s
+        public static final double ANGLE_POS_FACTOR = (2 * Math.PI) / ANGLE_GEAR_RATIO; // rotasyon -> radyan
 
-        // --- CAN ID'leri ---
-        // Pigeon 2.0
+        // --- CAN ID ---
+        // Pigeon
         public static final int PIGEON_ID = 20;
 
         // Front Left
         public static final int FL_DRIVE_ID = 2;
         public static final int FL_ANGLE_ID = 3;
         public static final int FL_CANCODER_ID = 21;
-        public static final double FL_OFFSET = -Math.toRadians(0.0); // Cancoder Offseti (Dereceyi radyana çevir)
+        public static final double FL_OFFSET = -Math.toRadians(0.0); // cancoder Offset derece -> radyan
 
         // Front Right
         public static final int FR_DRIVE_ID = 4;
