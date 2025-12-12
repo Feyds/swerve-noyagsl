@@ -20,7 +20,6 @@ public class DriveTrain {
     private final SwerveDriveOdometry odometry;
 
     public DriveTrain() {
-        // İsim parametresi eklendi
         frontLeft = new SwerveModule("FrontLeft", SwerveConstants.FL_DRIVE_ID, SwerveConstants.FL_ANGLE_ID, SwerveConstants.FL_CANCODER_ID, SwerveConstants.FL_OFFSET);
         frontRight = new SwerveModule("FrontRight", SwerveConstants.FR_DRIVE_ID, SwerveConstants.FR_ANGLE_ID, SwerveConstants.FR_CANCODER_ID, SwerveConstants.FR_OFFSET);
         backLeft = new SwerveModule("BackLeft", SwerveConstants.BL_DRIVE_ID, SwerveConstants.BL_ANGLE_ID, SwerveConstants.BL_CANCODER_ID, SwerveConstants.BL_OFFSET);
@@ -57,16 +56,11 @@ public class DriveTrain {
         return Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
     }
 
-    // Robot.java'da robotPeriodic içinden çağrılır
     public void periodic() {
-        // Odometriyi güncelle
         odometry.update(getRotation2d(), getModulePositions());
 
-        // --- DASHBOARD GÜNCELLEMELERİ ---
-        // Gyro açısını ekrana bas
         SmartDashboard.putNumber("Gyro Yaw", getRotation2d().getDegrees());
 
-        // Her modülün verilerini ekrana bas
         frontLeft.updateTelemetry();
         frontRight.updateTelemetry();
         backLeft.updateTelemetry();

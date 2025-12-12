@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.SwerveConstants;
 
 public class SwerveModule {
-    public final String moduleName; // Modülün adı (Örn: "FrontLeft")
+    public final String moduleName;
     private final SparkMax driveMotor;
     private final SparkMax angleMotor;
     private final RelativeEncoder driveEncoder;
@@ -28,12 +28,10 @@ public class SwerveModule {
     private final CANcoder absoluteEncoder;
     private final double angleOffset;
 
-    // Constructor'a 'String name' eklendi
     public SwerveModule(String name, int driveId, int angleId, int cancoderId, double offset) {
         this.moduleName = name;
         this.angleOffset = offset;
 
-        // --- Motor Kurulumları ---
         driveMotor = new SparkMax(driveId, MotorType.kBrushless);
         angleMotor = new SparkMax(angleId, MotorType.kBrushless);
         absoluteEncoder = new CANcoder(cancoderId);
@@ -48,7 +46,6 @@ public class SwerveModule {
     }
 
     private void configureDevices() {
-        // --- Drive Motor Config ---
         SparkMaxConfig driveConfig = new SparkMaxConfig();
         driveConfig.encoder.positionConversionFactor(SwerveConstants.DRIVE_POS_FACTOR);
         driveConfig.encoder.velocityConversionFactor(SwerveConstants.DRIVE_VEL_FACTOR);
@@ -59,10 +56,9 @@ public class SwerveModule {
         
         driveMotor.configure(driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        // --- Angle Motor Config ---
         SparkMaxConfig angleConfig = new SparkMaxConfig();
         angleConfig.encoder.positionConversionFactor(SwerveConstants.ANGLE_POS_FACTOR);
-        angleConfig.inverted(true); // MK4i Angle motoru terstir
+        angleConfig.inverted(true);
         angleConfig.closedLoop.pid(SwerveConstants.ANGLE_P, SwerveConstants.ANGLE_I, SwerveConstants.ANGLE_D);
         angleConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
         angleConfig.closedLoop.positionWrappingEnabled(true);
@@ -77,15 +73,12 @@ public class SwerveModule {
         angleEncoder.setPosition(absolutePosition);
     }
 
-    // Offset uygulanmış açı (Robotun kullandığı)
     private double getAbsoluteEncoderRad() {
         double rotations = absoluteEncoder.getAbsolutePosition().getValueAsDouble();
         double angleRad = Units.rotationsToRadians(rotations);
         return angleRad - angleOffset;
     }
 
-    // *** OFFSET AYARI İÇİN BU METOD ÖNEMLİ ***
-    // Hiçbir offset çıkarmadan ham değeri verir. Constants.java'ya yazacağın değer bu.
     public double getRawAbsoluteEncoderRad() {
         double rotations = absoluteEncoder.getAbsolutePosition().getValueAsDouble();
         return Units.rotationsToRadians(rotations);
@@ -102,7 +95,6 @@ public class SwerveModule {
     public void setDesiredState(SwerveModuleState desiredState) {
         Rotation2d currentRotation = new Rotation2d(angleEncoder.getPosition());
         
-        // Optimize işlemi (WPILib 2025 - void dönüşlü)
         desiredState.optimize(currentRotation);
 
         if (Math.abs(desiredState.speedMetersPerSecond) < 0.01) {
@@ -119,12 +111,8 @@ public class SwerveModule {
         angleMotor.stopMotor();
     }
 
-    // --- Dashboard'a Veri Basma Fonksiyonu ---
     public void updateTelemetry() {
-        // Offset bulmak için bunu kullanacaksın:
         SmartDashboard.putNumber(moduleName + " RAW Encoder (Rad)", getRawAbsoluteEncoderRad());
-        
-        // Diğer veriler
         SmartDashboard.putNumber(moduleName + " Integrated Angle", angleEncoder.getPosition());
         SmartDashboard.putNumber(moduleName + " Velocity", driveEncoder.getVelocity());
     }
