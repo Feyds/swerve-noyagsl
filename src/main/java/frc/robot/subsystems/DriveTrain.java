@@ -8,6 +8,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.SwerveConstants;
 
@@ -18,6 +20,9 @@ public class DriveTrain {
     private final SwerveModule backRight;
     private final Pigeon2 gyro;
     private final SwerveDriveOdometry odometry;
+
+    private final Field2d m_field = new Field2d(); // Sanal saha
+    private double simGyroAngle = 0.0; // Simülasyon Gyro açısı
 
     public DriveTrain() {
         frontLeft = new SwerveModule("FrontLeft", SwerveConstants.FL_DRIVE_ID, SwerveConstants.FL_ANGLE_ID, SwerveConstants.FL_CANCODER_ID, SwerveConstants.FL_OFFSET);
@@ -33,6 +38,8 @@ public class DriveTrain {
             getRotation2d(), 
             getModulePositions()
         );
+
+        SmartDashboard.putData("Field", m_field);
     }
 
     public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
@@ -53,6 +60,10 @@ public class DriveTrain {
     }
     
     public Rotation2d getRotation2d() {
+        if (RobotBase.isSimulation()) {
+            // Simülasyonda hesapladığımız sanal açıyı dön
+            return Rotation2d.fromRadians(simGyroAngle);
+        }
         return Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
     }
 
@@ -61,10 +72,36 @@ public class DriveTrain {
 
         SmartDashboard.putNumber("Gyro Yaw", getRotation2d().getDegrees());
 
+        // Robotun konumunu Field objesine işle ki AdvantageScope görsün
+        m_field.setRobotPose(odometry.getPoseMeters());
+
         frontLeft.updateTelemetry();
         frontRight.updateTelemetry();
         backLeft.updateTelemetry();
         backRight.updateTelemetry();
+    }
+
+    public void simulationPeriodic() {
+        double dt = 0.02; // 20ms döngü süresi
+
+        // Modüllerin simülasyonunu çalıştır (Mesafeleri topla)
+        frontLeft.simulationPeriodic(dt);
+        frontRight.simulationPeriodic(dt);
+        backLeft.simulationPeriodic(dt);
+        backRight.simulationPeriodic(dt);
+
+        // Gyro Simülasyonu:
+        // Modüllerin durumuna bakarak şasinin dönme hızını (omega) hesapla
+        var chassisSpeeds = SwerveConstants.KINEMATICS.toChassisSpeeds(
+            frontLeft.getState(),
+            frontRight.getState(),
+            backLeft.getState(),
+            backRight.getState()
+        );
+        
+        // Dönme hızı * zaman = Dönülen Açı
+        // Bu açıyı simGyroAngle değişkenine ekle (Tersi yönde olabilir, test et)
+        simGyroAngle += chassisSpeeds.omegaRadiansPerSecond * dt;
     }
     
     public void resetGyro() {
@@ -86,4 +123,5 @@ public class DriveTrain {
         backLeft.stop();
         backRight.stop();
     }
+
 }

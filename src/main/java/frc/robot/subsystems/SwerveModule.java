@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.SwerveConstants;
 
@@ -27,6 +28,10 @@ public class SwerveModule {
     private final SparkClosedLoopController anglePID;
     private final CANcoder absoluteEncoder;
     private final double angleOffset;
+
+    private double simDrivePosition = 0.0; // Sanal gidilen yol (metre)
+    private double simAngleRad = 0.0;      // Sanal açı (radyan)
+    private SwerveModuleState lastDesiredState = new SwerveModuleState(); // Son istenen hız/açı
 
     public SwerveModule(String name, int driveId, int angleId, int cancoderId, double offset) {
         this.moduleName = name;
@@ -74,6 +79,9 @@ public class SwerveModule {
     }
 
     private double getAbsoluteEncoderRad() {
+        if (RobotBase.isSimulation()) {
+            return simAngleRad;
+        }
         double rotations = absoluteEncoder.getAbsolutePosition().getValueAsDouble();
         double angleRad = Units.rotationsToRadians(rotations);
         return angleRad - angleOffset;
@@ -85,17 +93,31 @@ public class SwerveModule {
     }
 
     public SwerveModuleState getState() {
+        if (RobotBase.isSimulation()) {
+            return new SwerveModuleState(lastDesiredState.speedMetersPerSecond, new Rotation2d(simAngleRad));
+        }
         return new SwerveModuleState(driveEncoder.getVelocity(), new Rotation2d(angleEncoder.getPosition()));
     }
 
     public SwerveModulePosition getPosition() {
+        // Eğer simülasyondaysak sanal veriyi dön
+        if (RobotBase.isSimulation()) {
+            return new SwerveModulePosition(simDrivePosition, new Rotation2d(simAngleRad));
+        }
         return new SwerveModulePosition(driveEncoder.getPosition(), new Rotation2d(angleEncoder.getPosition()));
     }
 
     public void setDesiredState(SwerveModuleState desiredState) {
         Rotation2d currentRotation = new Rotation2d(angleEncoder.getPosition());
+
+        // Simülasyon için de optimize etmeliyiz ki tekerlek 180 derece ters dönmesin
+        if(RobotBase.isSimulation()){
+            currentRotation = new Rotation2d(simAngleRad);
+       }
         
         desiredState.optimize(currentRotation);
+        // Simülasyon döngüsünde kullanmak için bu değeri saklıyoruz
+        this.lastDesiredState = desiredState;
 
         if (Math.abs(desiredState.speedMetersPerSecond) < 0.01) {
             stop();
@@ -109,6 +131,15 @@ public class SwerveModule {
     public void stop() {
         driveMotor.stopMotor();
         angleMotor.stopMotor();
+    }
+
+    public void simulationPeriodic(double dt) {
+        // x = v * t formülü
+        // Hız (m/s) * geçen süre (0.02s) = Gidilen Mesafe
+        simDrivePosition += lastDesiredState.speedMetersPerSecond * dt;
+        
+        // Açıyı direkt eşitliyoruz (Sanki motor anında dönmüş gibi kabul ediyoruz, PID simüle etmedik)
+        simAngleRad = lastDesiredState.angle.getRadians();
     }
 
     public void updateTelemetry() {
