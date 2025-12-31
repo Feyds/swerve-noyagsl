@@ -29,7 +29,7 @@ public final class Constants {
         public static final int FL_DRIVE_ID = 2;
         public static final int FL_ANGLE_ID = 3;
         public static final int FL_CANCODER_ID = 21;
-        public static final double FL_OFFSET = 0.0; // cancoder Offset derece -> radyan
+        public static final double FL_OFFSET = 0.0; // Cancoder Offseti (Dereceyi radyana çevir)
 
         // Front Right
         public static final int FR_DRIVE_ID = 4;
